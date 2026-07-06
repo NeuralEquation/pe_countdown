@@ -1,0 +1,19 @@
+{
+  "name": "体育残りカウント",
+  "short_name": "体育カウント",
+  "description": "高3体育の残り回数を自動で数えるカウントサイト",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#4b8a62",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

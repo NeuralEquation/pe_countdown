@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>体育残りカウント</title>
+  <meta name="theme-color" content="#4b8a62">
+  <meta name="description" content="高3体育の残り回数を自動でカウントするサイト">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f1e8;
+      --panel: #fffaf0;
+      --panel-strong: #ffffff;
+      --ink: #243031;
+      --muted: #64706d;
+      --line: rgba(36, 48, 49, 0.12);
+      --green: #4b8a62;
+      --teal: #2f7f8f;
+      --gold: #d7a23b;
+      --coral: #d96b57;
+      --shadow: 0 18px 45px rgba(67, 72, 62, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(75, 138, 98, 0.16), transparent 32rem),
+        linear-gradient(145deg, #f9f3e5 0%, #eef5ef 50%, #f5f1e8 100%);
+      letter-spacing: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 18px 16px 36px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 255px;
+      padding: 26px 22px 22px;
+      border: 1px solid rgba(36, 48, 49, 0.08);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 250, 240, 0.94), rgba(255, 255, 255, 0.72)),
+        repeating-linear-gradient(90deg, rgba(75, 138, 98, 0.1) 0 1px, transparent 1px 34px),
+        repeating-linear-gradient(0deg, rgba(75, 138, 98, 0.08) 0 1px, transparent 1px 34px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -36px;
+      bottom: -34px;
+      width: 190px;
+      aspect-ratio: 1;
+      background:
+        linear-gradient(90deg, transparent 45%, rgba(47, 127, 143, 0.5) 45% 55%, transparent 55%),
+        linear-gradient(0deg, transparent 45%, rgba(47, 127, 143, 0.5) 45% 55%, transparent 55%),
+        radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 36%, transparent 37%);
+      border: 2px solid rgba(47, 127, 143, 0.32);
+      border-radius: 50%;
+      opacity: 0.52;
+      transform: rotate(-10deg);
+      pointer-events: none;
+    }
+
+    .date-line {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(2.45rem, 12vw, 4.9rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .subline {
+      position: relative;
+      z-index: 1;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .highlight-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .highlight {
+      min-height: 96px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .value {
+      font-size: 1.18rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .content {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 240, 0.82);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      line-height: 1.35;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 92px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+    }
+
+    .card-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .mark {
+      flex: 0 0 auto;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .mark.basket {
+      background: var(--gold);
+    }
+
+    .mark.soft {
+      background: var(--teal);
+    }
+
+    .mark.volley {
+      background: var(--coral);
+    }
+
+    .card-count {
+      margin-top: 10px;
+      font-size: 1.75rem;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .place-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .place {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+    }
+
+    .place strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.45rem;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .progress-number {
+      font-size: 1.3rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(36, 48, 49, 0.13);
+      border-radius: 999px;
+      background: rgba(36, 48, 49, 0.09);
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--teal));
+      transition: width 180ms ease;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 92px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .timeline-date {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .timeline-subject {
+      min-width: 0;
+      font-weight: 850;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #ffffff;
+      background: var(--green);
+      font-size: 0.74rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .badge.gym {
+      background: var(--gold);
+      color: #362913;
+    }
+
+    details.section {
+      padding: 0;
+    }
+
+    summary {
+      min-height: 54px;
+      padding: 16px 18px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 850;
+      list-style-position: inside;
+    }
+
+    .settings-body {
+      padding: 0 18px 18px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 48px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      width: 62px;
+      height: 34px;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .slider {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: rgba(36, 48, 49, 0.18);
+      transition: background 160ms ease;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(36, 48, 49, 0.22);
+      transition: transform 160ms ease;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--green);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(28px);
+    }
+
+    .note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    .progress-percent {
+      margin-top: 12px;
+      color: var(--ink);
+      font-size: 1.12rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    @media (min-width: 680px) {
+      .app {
+        padding-top: 28px;
+      }
+
+      .highlight-grid {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+
+      .content {
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: start;
+      }
+
+      .wide {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .app {
+        padding: 12px 10px 28px;
+      }
+
+      .hero,
+      .section {
+        padding: 16px;
+      }
+
+      .cards,
+      .place-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr auto;
+      }
+
+      .timeline-date {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero" aria-labelledby="main-count">
+      <p class="date-line" id="todayLabel"></p>
+      <h1 id="main-count">体育  残り--回</h1>
+      <p class="subline" id="statusText"></p>
+
+      <div class="highlight-grid">
+        <div class="highlight">
+          <span class="label">次の体育</span>
+          <div class="value" id="nextClass">--</div>
+        </div>
+        <div class="highlight">
+          <span class="label">完全終了予定</span>
+          <div class="value" id="lastClass">--</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content">
+      <section class="section">
+        <h2 class="section-title">種目別</h2>
+        <div class="cards" id="subjectCards"></div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">場所別</h2>
+        <div class="place-grid" id="placeCards"></div>
+      </section>
+
+      <section class="section wide">
+        <div class="progress-row">
+          <h2 class="section-title">進捗</h2>
+          <div class="progress-number" id="progressNumber">-- / --</div>
+        </div>
+        <div class="progress-track" aria-label="年間体育の進捗">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-percent" id="progressText"></p>
+      </section>
+
+      <section class="section wide">
+        <h2 class="section-title">この先の体育</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+
+      <details class="section wide">
+        <summary>詳細設定</summary>
+        <div class="settings-body">
+          <div class="toggle-row">
+            <span>今日の体育を残りに含める</span>
+            <label class="switch">
+              <input type="checkbox" id="includeTodayToggle" checked>
+              <span class="slider" aria-hidden="true"></span>
+            </label>
+          </div>
+          <p class="note" id="settingNote"></p>
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <script>
+    const TEST_DATE = "";
+    const INCLUDE_TODAY_STORAGE_KEY = "peCountdown.includeToday";
+
+    const peClasses = [
+      { date: "2026-04-13", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-04-20", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-05-11", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-05-18", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-05-25", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-06-01", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-06-08", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-06-15", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-06-22", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-07-06", subject: "テニス", term: "1学期", place: "外" },
+      { date: "2026-07-13", subject: "テニス", term: "1学期", place: "外" },
+
+      { date: "2026-04-10", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-04-17", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-05-08", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-05-15", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-05-22", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-06-05", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-06-12", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-06-19", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-06-26", subject: "バスケ", term: "1学期", place: "体育館" },
+      { date: "2026-07-10", subject: "バスケ", term: "1学期", place: "体育館" },
+
+      { date: "2026-09-07", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-09-14", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-09-28", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-10-19", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-10-26", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-11-02", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-11-09", subject: "ソフトボール", term: "2学期", place: "外" },
+      { date: "2026-12-14", subject: "ソフトボール", term: "2学期", place: "外" },
+
+      { date: "2026-09-04", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-09-11", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-09-25", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-10-09", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-10-23", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-10-30", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-11-06", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-11-20", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-11-27", subject: "バレーボール", term: "2学期", place: "体育館" },
+      { date: "2026-12-11", subject: "バレーボール", term: "2学期", place: "体育館" },
+    ].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+    const subjectOrder = ["テニス", "バスケ", "ソフトボール", "バレーボール"];
+    const placeOrder = ["外", "体育館"];
+    const subjectClassNames = {
+      "テニス": "tennis",
+      "バスケ": "basket",
+      "ソフトボール": "soft",
+      "バレーボール": "volley",
+    };
+
+    function getToday() {
+      if (TEST_DATE) {
+        return TEST_DATE;
+      }
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseDate(dateString) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function formatDate(dateString) {
+      const date = parseDate(dateString);
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}/${month}/${day}(${weekdays[date.getDay()]})`;
+    }
+
+    function formatShortDate(dateString) {
+      const date = parseDate(dateString);
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+      return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]})`;
+    }
+
+    function getRemainingClasses(includeToday) {
+      const today = parseDate(getToday());
+      return peClasses.filter((item) => {
+        const classDate = parseDate(item.date);
+        return includeToday ? classDate >= today : classDate > today;
+      });
+    }
+
+    function getCompletedClasses(includeToday) {
+      const remainingDates = new Set(getRemainingClasses(includeToday).map((item) => item.date));
+      return peClasses.filter((item) => !remainingDates.has(item.date));
+    }
+
+    function countBySubject(classes) {
+      return classes.reduce((counts, item) => {
+        counts[item.subject] = (counts[item.subject] || 0) + 1;
+        return counts;
+      }, {});
+    }
+
+    function countByPlace(classes) {
+      return classes.reduce((counts, item) => {
+        counts[item.place] = (counts[item.place] || 0) + 1;
+        return counts;
+      }, {});
+    }
+
+    function getNextClass(classes) {
+      return classes[0] || null;
+    }
+
+    function todayHasClass() {
+      const today = getToday();
+      return peClasses.some((item) => item.date === today);
+    }
+
+    function loadIncludeTodaySetting() {
+      try {
+        const saved = localStorage.getItem(INCLUDE_TODAY_STORAGE_KEY);
+        return saved === null ? true : saved === "true";
+      } catch (error) {
+        return true;
+      }
+    }
+
+    function saveIncludeTodaySetting(includeToday) {
+      try {
+        localStorage.setItem(INCLUDE_TODAY_STORAGE_KEY, String(includeToday));
+      } catch (error) {
+        // Storage can be unavailable in private or restricted browser modes.
+      }
+    }
+
+    function render() {
+      const includeToday = document.getElementById("includeTodayToggle").checked;
+      const remaining = getRemainingClasses(includeToday);
+      const completed = getCompletedClasses(includeToday);
+      const subjectCounts = countBySubject(remaining);
+      const placeCounts = countByPlace(remaining);
+      const nextClass = getNextClass(remaining);
+      const lastClass = peClasses[peClasses.length - 1];
+      const total = peClasses.length;
+      const completedRate = Math.round((completed.length / total) * 100);
+
+      document.getElementById("todayLabel").textContent = `今日：${formatDate(getToday())}`;
+      document.getElementById("main-count").textContent = remaining.length > 0
+        ? `体育  残り${remaining.length}回`
+        : "体育終了。お疲れさま。";
+      document.getElementById("statusText").textContent = remaining.length > 0
+        ? `年間${total}回中、${completed.length}回終了しています。`
+        : `年間${total}回すべて終了しています。`;
+      document.getElementById("nextClass").textContent = nextClass
+        ? `${formatShortDate(nextClass.date)} ${nextClass.subject}`
+        : "もうありません";
+      document.getElementById("lastClass").textContent = formatShortDate(lastClass.date);
+
+      document.getElementById("subjectCards").innerHTML = subjectOrder.map((subject) => {
+        const count = subjectCounts[subject] || 0;
+        const className = subjectClassNames[subject];
+        return `
+          <article class="card">
+            <div class="card-name"><span class="mark ${className}"></span>${subject}</div>
+            <div class="card-count">残り${count}回</div>
+          </article>
+        `;
+      }).join("");
+
+      document.getElementById("placeCards").innerHTML = placeOrder.map((place) => {
+        const label = place === "外" ? "外体育" : "体育館";
+        return `
+          <div class="place">
+            <span class="label">${label}</span>
+            <strong>残り${placeCounts[place] || 0}回</strong>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("progressNumber").textContent = `${completed.length} / ${total} 回終了`;
+      document.getElementById("progressFill").style.width = `${completedRate}%`;
+      document.getElementById("progressText").textContent = `進捗 ${completedRate}%`;
+
+      const timelineItems = remaining.slice(0, 6);
+      document.getElementById("timeline").innerHTML = timelineItems.length > 0
+        ? timelineItems.map((item) => `
+            <div class="timeline-item">
+              <div class="timeline-date">${formatShortDate(item.date)}</div>
+              <div class="timeline-subject">${item.subject}</div>
+              <div class="badge ${item.place === "体育館" ? "gym" : ""}">${item.place}</div>
+            </div>
+          `).join("")
+        : `<p class="note">予定されている体育はありません。</p>`;
+
+      document.getElementById("settingNote").textContent = todayHasClass()
+        ? "OFFにすると、今日の体育を終わった扱いにします。"
+        : "今日は体育日ではないため、切り替えても回数は変わりません。";
+    }
+
+    const includeTodayToggle = document.getElementById("includeTodayToggle");
+    includeTodayToggle.checked = loadIncludeTodaySetting();
+    includeTodayToggle.addEventListener("change", () => {
+      saveIncludeTodaySetting(includeTodayToggle.checked);
+      render();
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
