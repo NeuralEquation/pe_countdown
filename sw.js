@@ -1,4 +1,4 @@
-const CACHE_NAME = "pe-countdown-v2";
+const CACHE_NAME = "pe-countdown-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -43,3 +43,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
